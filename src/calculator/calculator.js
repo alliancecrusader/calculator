@@ -1,19 +1,28 @@
-import Evaluator from "./compiler/evaluator";
+import Evaluator from "./evaluator";
 import Parser from "./compiler/parser";
 import Lexer from "./compiler/lexer";
+import { defaultAngleUnit } from "../settings/angleUnits";
 
 class Calculator {
-    constructor(input) {
-        this.lexer = new Lexer(input);
-        this.parser = null;
-        this.evaluator = new Evaluator();
+    constructor(input, options = { angleUnit: defaultAngleUnit }) {
+        if (typeof input !== 'string') {
+            throw new Error("Input must be a string");
+        }
+
+        if (input.trim() === '') {
+            throw new Error("Input cannot be an empty string");
+        }
+
+        this._lexer = new Lexer(input);
+        this._parser = null;
+        this._evaluator = new Evaluator(options);
     }
 
     calculate() {
         let tokens = [];
 
         try {
-            tokens = this.lexer.lex();
+            tokens = this._lexer.lex();
         }
         catch (error) {
             console.error("Error during lexing:", error);
@@ -22,10 +31,11 @@ class Calculator {
 
         console.log("Tokens:", tokens);
 
-        this.parser = new Parser(tokens);
+        this._parser = new Parser(tokens);
         let ast;
+
         try {
-            ast = this.parser.parse();
+            ast = this._parser.parse();
         }
         catch (error) {
             console.error("Error during parsing:", error);
@@ -37,7 +47,7 @@ class Calculator {
         let result;
 
         try {
-            result = this.evaluator.evaluate(ast);
+            result = this._evaluator.evaluate(ast);
         }
         catch (error) {
             console.error("Error during evaluation:", error);

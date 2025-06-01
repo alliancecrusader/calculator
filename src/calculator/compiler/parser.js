@@ -84,7 +84,7 @@ class Parser extends ParserBase {
 
     // Parses a term, which can be a series of factors combined with multiplication or division.
     term () {
-        let left = this.factor();
+        let left = this.power();
 
         while (this.currentToken && (this.currentToken.type === tokenTypes.ARITHMETIC_OPERATOR && (this.currentToken.value === '*' || this.currentToken.value === '/'))) {
             const operator = this.currentToken.value;
@@ -100,6 +100,50 @@ class Parser extends ParserBase {
         }
 
         return left;
+    }
+
+    power() {
+        let left = this.factor();
+
+        while (this.currentToken && (this.currentToken.type === tokenTypes.ARITHMETIC_OPERATOR && this.currentToken.value === '^')) {
+            const operator = this.currentToken.value;
+            this.advance();
+            const right = this.factor();
+
+            left = {
+                type: nodeTypes.BINARY_OPERATOR,
+                operator: operator,
+                left: left,
+                right: right
+            };
+        }
+
+        return left;
+    }
+
+    function_call() {
+        const token = this.currentToken;
+
+        console.log("function_call token", token);
+
+        if (token.type !== tokenTypes.FUNCTION_CALL) {
+            throw new Error(`Expected a function call token, but got ${token.type} at position ${token.position}`);
+        }
+
+        this.advance();
+
+        this.expect(tokenTypes.LPAREN);
+
+        const value = this.expression();
+        
+        this.expect(tokenTypes.RPAREN);
+
+        return {
+            type: nodeTypes.FUNCTION_CALL,
+            function: token.value,
+            value: value,
+            position: token.position
+        };
     }
 
     // Parses a factor, which can be a number, a unary operation, or a parenthesized expression.
@@ -135,6 +179,8 @@ class Parser extends ParserBase {
             this.expect(tokenTypes.RPAREN);
             
             return expr;
+        } else if (token.type === tokenTypes.FUNCTION_CALL) {
+            return this.function_call();
         } else {
             throw new Error(`Unexpected token type ${token.type} at position ${token.position} with value ${token.value}`);
         }

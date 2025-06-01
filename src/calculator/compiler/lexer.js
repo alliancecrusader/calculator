@@ -1,4 +1,4 @@
-import { tokenTypes } from "./tokenTypes";
+import { tokenTypes, identPartRegex, identStartRegex, functions } from "./tokenTypes";
 
 class Lexer {
     constructor(input) {
@@ -33,8 +33,29 @@ class Lexer {
         const tokens = [];
 
         while (this.current !== null) {
+            // Skip whitespace, newlines, and tabs
             if (/\s/.test(this.current)) {
                 this.advance();
+                continue;
+            }
+
+            if (identStartRegex.test(this.current)) {
+                let identifier = '';
+
+                while (this.current !== null && identPartRegex.test(this.current)) {
+                    identifier += this.current;
+                    this.advance();
+                }
+
+                if (functions[identifier]) {
+                    tokens.push({
+                        type: tokenTypes.FUNCTION_CALL,
+                        value: identifier,
+                        position: this.position - identifier.length
+                    });
+                } else {
+                    throw new Error(`Unknown identifier: ${identifier}`);
+                }
                 continue;
             }
 
@@ -66,7 +87,7 @@ class Lexer {
                 continue;
             }
 
-            if ('+-*/'.includes(this.current)) {
+            if ('+-*/^'.includes(this.current)) {
                 tokens.push({
                     type: tokenTypes.ARITHMETIC_OPERATOR,
                     value: this.current,

@@ -50,4 +50,19 @@ describe('Calculator', () => {
         const calc = new Calculator('asdfasda');
         expect(() => calc.calculate()).toThrow();
     });
+
+    test('handles function calls', () => {
+        const calc = new Calculator('sqrt(16)');
+        expect(calc.calculate()).toBe(4);
+    });
+
+    test('throws on unknown function', () => {
+        const calc = new Calculator('unknownFunction(16)');
+        expect(() => calc.calculate()).toThrow('Unknown identifier: unknownFunction');
+    });
+
+    test('handles complex expressions', () => {
+        const calc = new Calculator('2 + 3 * (4 - 1) / sqrt(9)');
+        expect(calc.calculate()).toBe(5);
+    });
 });
